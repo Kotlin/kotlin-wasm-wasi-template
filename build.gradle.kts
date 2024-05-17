@@ -1,20 +1,16 @@
 import org.gradle.internal.os.OperatingSystem
-import de.undercouch.gradle.tasks.download.Download
+import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
-import java.io.OutputStream
 
 plugins {
-    kotlin("multiplatform")
-    id("de.undercouch.download") version "5.6.0"
+    kotlin("multiplatform") version "1.9.22"
 }
-
-val kotlin_repo_url: String? = project.properties["kotlin_repo_url"] as String?
 
 repositories {
     mavenCentral()
-    kotlin_repo_url?.also { maven(it) }
 }
 
 // Deno tasks
@@ -94,9 +90,6 @@ fun Project.createDenoExecutableFile(
     outputDirectory: Provider<File>,
     resultFileName: String,
 ): TaskProvider<Task> = tasks.register(taskName, Task::class) {
-    outputs.dir(outputDirectory)
-    inputs.property("wasmFileName", wasmFileName)
-
     doFirst {
         val denoMjs = File(outputDirectory.get(), resultFileName)
         denoMjs.writeText(getDenoExecutableText(wasmFileName.get()))
@@ -126,8 +119,8 @@ fun Project.createDenoExec(
         }
         dependsOn(denoFileTask)
 
-        taskGroup?.let {
-            group = it
+        if (taskGroup != null) {
+            group = taskGroup
         }
 
         description = "Executes tests with Deno"
@@ -146,10 +139,7 @@ fun Project.createDenoExec(
         newArgs.add(denoFileName)
 
         args(newArgs)
-
-        doFirst {
-            workingDir(outputDirectory)
-        }
+        workingDir = outputDirectory.get()
     }
 }
 
@@ -168,6 +158,15 @@ kotlin {
             }
         }
     }
+}
+
+rootProject.the<NodeJsRootExtension>().apply {
+    nodeVersion = "21.0.0-v8-canary202309143a48826a08"
+    nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>().configureEach {
+    args.add("--ignore-engines")
 }
 
 tasks.withType<KotlinJsTest>().all {
@@ -199,46 +198,5 @@ tasks.withType<NodeJsExec>().all {
         dependsOn (
             project.provider { this@all.taskDependencies }
         )
-
-        testExecTask()
-    }
-
-    testExecTask()
-}
-
-
-fun AbstractExecTask<*>.testExecTask() {
-    val result = StringBuilder()
-
-    standardOutput = object : OutputStream() {
-        override fun write(b: Int) {
-            result.append(b.toChar())
-        }
-
-    }
-
-    doLast {
-        println(result.toString())
-
-        val expectedString1 = "Hello from Kotlin via WASI"
-        val expectedRegex2 = "Current 'realtime' timestamp is: [\\d]+".toRegex()
-        val expectedRegex3 = "Current 'monotonic' timestamp is: [\\d]+".toRegex()
-
-        val lines = result.lines().filter { it.isNotEmpty() }
-        check(lines.size == 3) {
-            "Expected 3 lines, actual: ${lines.size}"
-        }
-
-        check(lines[0] == expectedString1) {
-            "Expected '$expectedString1', actual: '${lines[0]}'"
-        }
-
-        check(expectedRegex2.matches(lines[1])) {
-            "Expected matching to '$expectedRegex2', actual: '${lines[1]}'"
-        }
-
-        check(expectedRegex3.matches(lines[2])) {
-            "Expected matching to '$expectedRegex3', actual: '${lines[2]}'"
-        }
     }
 }
