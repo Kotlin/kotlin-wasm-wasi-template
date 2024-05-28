@@ -1,5 +1,6 @@
 import org.gradle.internal.os.OperatingSystem
 import de.undercouch.gradle.tasks.download.Download
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.Companion.fromVersion
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
@@ -11,6 +12,7 @@ plugins {
 }
 
 val kotlin_repo_url: String? = project.properties["kotlin_repo_url"] as String?
+val language_version: String? = project.properties["language_version"] as String?
 
 repositories {
     mavenCentral()
@@ -159,6 +161,14 @@ kotlin {
     wasmWasi {
         nodejs()
         binaries.executable()
+
+        compilations.configureEach {
+            compileTaskProvider.configure {
+                language_version?.let {
+                    compilerOptions.languageVersion.set(fromVersion(it))
+                }
+            }
+        }
     }
 
     sourceSets {
