@@ -2,6 +2,7 @@
 
 import org.gradle.internal.os.OperatingSystem
 import de.undercouch.gradle.tasks.download.Download
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.Companion.fromVersion
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
@@ -14,14 +15,26 @@ plugins {
     alias(libs.plugins.undercouchDownload) apply false
 }
 
+val kotlin_repo_url: String? = project.properties["kotlin_repo_url"] as String?
+val language_version: String? = project.properties["language_version"] as String?
+
 repositories {
     mavenCentral()
+    kotlin_repo_url?.also { maven(it) }
 }
 
 kotlin {
     wasmWasi {
         nodejs()
         binaries.executable()
+
+        compilations.configureEach {
+            compileTaskProvider.configure {
+                language_version?.let {
+                    compilerOptions.languageVersion.set(fromVersion(it))
+                }
+            }
+        }
     }
 
     sourceSets {
@@ -32,7 +45,7 @@ kotlin {
 }
 
 // Uncomment following block to turn off using the Exception Handling proposal.
-// Note, with this option, the compiler will generate `unreachable` instruction instead of throw, 
+// Note, with this option, the compiler will generate `unreachable` instruction instead of throw,
 // and a Wasm module will stop execution in this case.
 //
 // tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile>().configureEach {
