@@ -2,20 +2,25 @@
 
 import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.Companion.fromVersion
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.wasm.wasmtime.WasmtimeExec
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
 import org.gradle.internal.os.OperatingSystem
 import java.nio.file.Files
-import java.util.Locale
+import java.util.*
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.undercouchDownload) apply false
 }
 
+val kotlin_repo_url: String? = project.properties["kotlin_repo_url"] as String?
+val language_version: String? = project.properties["language_version"] as String?
+
 repositories {
     mavenCentral()
+    kotlin_repo_url?.also { maven(it) }
 }
 
 ///////////////////////////////// COMPILER OPTIONS //////////////////////////////////////////////////
@@ -39,6 +44,14 @@ kotlin {
     wasmWasi {
         wasmtime()
         binaries.executable()
+
+        compilations.configureEach {
+            compileTaskProvider.configure {
+                language_version?.let {
+                    compilerOptions.languageVersion.set(fromVersion(it))
+                }
+            }
+        }
     }
 
     sourceSets {
@@ -69,6 +82,7 @@ val currentOsType = run {
             "aarch64" -> OsArch.ARM64
             else -> OsArch.X86_64
         }
+
         else -> OsArch.UNKNOWN
     }
 
@@ -92,6 +106,7 @@ val unzipWasmEdge = run {
         OsType(OsName.MAC, OsArch.ARM64) -> "darwin_arm64.tar.gz"
         OsType(OsName.WINDOWS, OsArch.X86_32),
         OsType(OsName.WINDOWS, OsArch.X86_64) -> "windows.zip"
+
         else -> error("unsupported os type $currentOsType")
     }
 
@@ -185,7 +200,7 @@ tasks.withType<KotlinJsTest>().all {
     )
 
     wasmEdgeRunTask.configure {
-        dependsOn (
+        dependsOn(
             project.provider { this@all.taskDependencies }
         )
     }
@@ -204,7 +219,7 @@ tasks.withType<WasmtimeExec>().all {
     )
 
     wasmEdgeRunTask.configure {
-        dependsOn (
+        dependsOn(
             project.provider { this@all.taskDependencies }
         )
     }
