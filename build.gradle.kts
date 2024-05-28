@@ -1,16 +1,18 @@
 @file:OptIn(ExperimentalWasmDsl::class)
 
-import org.gradle.internal.os.OperatingSystem
 import de.undercouch.gradle.tasks.download.Download
-import org.gradle.api.internal.file.archive.compression.*
+import org.gradle.api.internal.file.archive.compression.CompressedReadableResource
+import org.gradle.api.internal.file.archive.compression.URIBuilder
+import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.Companion.fromVersion
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
-import java.io.*
-import java.net.*
+import java.io.InputStream
+import java.net.URI
 import java.nio.file.Files
-import java.util.Locale
+import java.util.*
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -24,14 +26,26 @@ buildscript {
     }
 }
 
+val kotlin_repo_url: String? = project.properties["kotlin_repo_url"] as String?
+val language_version: String? = project.properties["language_version"] as String?
+
 repositories {
     mavenCentral()
+    kotlin_repo_url?.also { maven(it) }
 }
 
 kotlin {
     wasmWasi {
         nodejs()
         binaries.executable()
+
+        compilations.configureEach {
+            compileTaskProvider.configure {
+                language_version?.let {
+                    compilerOptions.languageVersion.set(fromVersion(it))
+                }
+            }
+        }
     }
 
     sourceSets {
@@ -42,7 +56,7 @@ kotlin {
 }
 
 // Uncomment the following block to turn off using the Exception Handling proposal.
-// Note, with this option, the compiler will generate `unreachable` instruction instead of throw, 
+// Note, with this option, the compiler will generate `unreachable` instruction instead of throw,
 // and a Wasm module will stop execution in this case.
 //
 // tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile>().configureEach {
@@ -74,6 +88,7 @@ val currentOsType = run {
             "aarch64" -> OsArch.ARM64
             else -> OsArch.X86_64
         }
+
         else -> OsArch.UNKNOWN
     }
 
@@ -200,7 +215,7 @@ tasks.withType<KotlinJsTest>().all {
     )
 
     denoExecTask.configure {
-        dependsOn (
+        dependsOn(
             project.provider { this@all.taskDependencies }
         )
     }
@@ -218,7 +233,7 @@ tasks.withType<NodeJsExec>().all {
     )
 
     denoExecTask.configure {
-        dependsOn (
+        dependsOn(
             project.provider { this@all.taskDependencies }
         )
     }
@@ -242,6 +257,7 @@ val unzipWasmEdge = run {
         OsType(OsName.MAC, OsArch.ARM64) -> "darwin_arm64.tar.gz"
         OsType(OsName.WINDOWS, OsArch.X86_32),
         OsType(OsName.WINDOWS, OsArch.X86_64) -> "windows.zip"
+
         else -> error("unsupported os type $currentOsType")
     }
 
@@ -335,7 +351,7 @@ tasks.withType<KotlinJsTest>().all {
     )
 
     wasmEdgeRunTask.configure {
-        dependsOn (
+        dependsOn(
             project.provider { this@all.taskDependencies }
         )
     }
@@ -346,7 +362,7 @@ tasks.withType<KotlinJsTest>().all {
 }
 
 tasks.withType<NodeJsExec>().all {
-     val wasmEdgeRunTask = createWasmEdgeExec(
+    val wasmEdgeRunTask = createWasmEdgeExec(
         inputFileProperty,
         name.replace("Node", "WasmEdge"),
         group,
@@ -354,7 +370,7 @@ tasks.withType<NodeJsExec>().all {
     )
 
     wasmEdgeRunTask.configure {
-        dependsOn (
+        dependsOn(
             project.provider { this@all.taskDependencies }
         )
     }
@@ -364,14 +380,14 @@ tasks.withType<NodeJsExec>().all {
 val wasmtimeVersion = "40.0.0"
 
 val wasmtimeSuffix = when (currentOsType) {
-    OsType(OsName.LINUX, OsArch.X86_64)   -> "x86_64-linux"
-    OsType(OsName.LINUX, OsArch.ARM64)    -> "aarch64-linux"
-    OsType(OsName.MAC, OsArch.X86_64)     -> "x86_64-macos"
-    OsType(OsName.MAC, OsArch.ARM64)      -> "aarch64-macos"
+    OsType(OsName.LINUX, OsArch.X86_64) -> "x86_64-linux"
+    OsType(OsName.LINUX, OsArch.ARM64) -> "aarch64-linux"
+    OsType(OsName.MAC, OsArch.X86_64) -> "x86_64-macos"
+    OsType(OsName.MAC, OsArch.ARM64) -> "aarch64-macos"
     OsType(OsName.WINDOWS, OsArch.X86_32),
     OsType(OsName.WINDOWS, OsArch.X86_64) -> "x86_64-windows"
 
-    else                                  -> error("unsupported os type $currentOsType")
+    else -> error("unsupported os type $currentOsType")
 }
 
 val wasmtimeArtifactName = "wasmtime-v$wasmtimeVersion-$wasmtimeSuffix"
@@ -430,7 +446,7 @@ fun Project.createWasmtimeExec(
 
         val executableName = when (currentOsType.name) {
             OsName.WINDOWS -> "wasmtime.exe"
-            else           -> "wasmtime"
+            else -> "wasmtime"
         }
         executable = wasmtimeDirectory.resolve(executableName).absolutePath
 
