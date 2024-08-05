@@ -1,12 +1,12 @@
 import org.gradle.internal.os.OperatingSystem
-import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Download
+import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
 
 plugins {
-    kotlin("multiplatform") version "1.9.22"
+    kotlin("multiplatform") version "2.0.0"
+    id("de.undercouch.download") version "5.6.0" apply false
 }
 
 repositories {
@@ -90,9 +90,12 @@ fun Project.createDenoExecutableFile(
     outputDirectory: Provider<File>,
     resultFileName: String,
 ): TaskProvider<Task> = tasks.register(taskName, Task::class) {
+    val denoMjs = outputDirectory.map { it.resolve(resultFileName) }
+    inputs.property("wasmFileName", wasmFileName)
+    outputs.file(denoMjs)
+
     doFirst {
-        val denoMjs = File(outputDirectory.get(), resultFileName)
-        denoMjs.writeText(getDenoExecutableText(wasmFileName.get()))
+        denoMjs.get().writeText(getDenoExecutableText(wasmFileName.get()))
     }
 }
 
@@ -107,7 +110,7 @@ fun Project.createDenoExec(
     val wasmFileName = nodeMjsFile.map { "${it.asFile.nameWithoutExtension}.wasm" }
 
     val denoFileTask = createDenoExecutableFile(
-        taskName = "${taskName}CreateDinoFile",
+        taskName = "${taskName}CreateDenoFile",
         wasmFileName = wasmFileName,
         outputDirectory = outputDirectory,
         resultFileName = denoFileName
@@ -119,8 +122,8 @@ fun Project.createDenoExec(
         }
         dependsOn(denoFileTask)
 
-        if (taskGroup != null) {
-            group = taskGroup
+        taskGroup?.let {
+            group = it
         }
 
         description = "Executes tests with Deno"
@@ -139,7 +142,9 @@ fun Project.createDenoExec(
         newArgs.add(denoFileName)
 
         args(newArgs)
-        workingDir = outputDirectory.get()
+        doFirst {
+            workingDir(outputDirectory)
+        }
     }
 }
 
@@ -158,15 +163,6 @@ kotlin {
             }
         }
     }
-}
-
-rootProject.the<NodeJsRootExtension>().apply {
-    nodeVersion = "21.0.0-v8-canary202309143a48826a08"
-    nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>().configureEach {
-    args.add("--ignore-engines")
 }
 
 tasks.withType<KotlinJsTest>().all {
