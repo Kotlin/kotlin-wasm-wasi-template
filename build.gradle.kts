@@ -96,12 +96,12 @@ fun Project.createDenoExecutableFile(
     outputDirectory: Provider<File>,
     resultFileName: String,
 ): TaskProvider<Task> = tasks.register(taskName, Task::class) {
-    outputs.dir(outputDirectory)
+    val denoMjs = outputDirectory.map { it.resolve(resultFileName) }
     inputs.property("wasmFileName", wasmFileName)
+    outputs.file(denoMjs)
 
     doFirst {
-        val denoMjs = File(outputDirectory.get(), resultFileName)
-        denoMjs.writeText(getDenoExecutableText(wasmFileName.get()))
+        denoMjs.get().writeText(getDenoExecutableText(wasmFileName.get()))
     }
 }
 
@@ -116,7 +116,7 @@ fun Project.createDenoExec(
     val wasmFileName = nodeMjsFile.map { "${it.asFile.nameWithoutExtension}.wasm" }
 
     val denoFileTask = createDenoExecutableFile(
-        taskName = "${taskName}CreateDinoFile",
+        taskName = "${taskName}CreateDenoFile",
         wasmFileName = wasmFileName,
         outputDirectory = outputDirectory,
         resultFileName = denoFileName
