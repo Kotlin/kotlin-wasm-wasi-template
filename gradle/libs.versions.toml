@@ -1,0 +1,10 @@
+[versions]
+kotlin = "2.0.10"
+undercouch = "5.6.0"
+
+[libraries]
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+[plugins]
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+undercouchDownload = { id = "de.undercouch.download", version.ref = "undercouch" }

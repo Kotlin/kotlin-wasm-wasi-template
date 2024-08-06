@@ -5,8 +5,8 @@ import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
 
 plugins {
-    kotlin("multiplatform") version "2.0.0"
-    id("de.undercouch.download") version "5.6.0" apply false
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.undercouchDownload) apply false
 }
 
 repositories {
@@ -159,7 +159,7 @@ kotlin {
     sourceSets {
         val wasmWasiTest by getting {
             dependencies {
-                implementation("org.jetbrains.kotlin:kotlin-test")
+                implementation(libs.kotlin.test)
             }
         }
     }
