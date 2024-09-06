@@ -32,6 +32,7 @@ To build and run the application:
 * **Run tests with WasmEdge:**
 
   `./gradlew wasmWasiWasmEdgeTest`
+  <br>&nbsp;<br>
 
 * **Run the program with NodeJs:**
 
