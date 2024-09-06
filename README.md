@@ -24,6 +24,15 @@ To build and run the application:
 1. In IntelliJ IDEA, open the repository.
 2. Run the application by typing one of the following Gradle commands in the terminal:
 
+* **Run the program with WasmEdge:**
+
+  `./gradlew wasmWasiWasmEdgeRun`
+  <br>&nbsp;<br>
+
+* **Run tests with WasmEdge:**
+
+  `./gradlew wasmWasiWasmEdgeTest`
+
 * **Run the program with NodeJs:**
 
   `./gradlew wasmWasiNodeRun` 
