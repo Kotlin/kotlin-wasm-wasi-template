@@ -3,6 +3,7 @@ import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
+import java.nio.file.Files
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -13,7 +14,22 @@ repositories {
     mavenCentral()
 }
 
-// Deno tasks
+kotlin {
+    wasmWasi {
+        nodejs()
+        binaries.executable()
+    }
+
+    sourceSets {
+        val wasmWasiTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+            }
+        }
+    }
+}
+
+
 enum class OsName { WINDOWS, MAC, LINUX, UNKNOWN }
 enum class OsArch { X86_32, X86_64, ARM64, UNKNOWN }
 data class OsType(val name: OsName, val arch: OsArch)
@@ -39,6 +55,7 @@ val currentOsType = run {
     OsType(osName, osArch)
 }
 
+// Deno tasks
 val unzipDeno = run {
     val denoVersion = "1.38.3"
     val denoDirectory = "https://github.com/denoland/deno/releases/download/v$denoVersion"
@@ -149,22 +166,6 @@ fun Project.createDenoExec(
 }
 
 
-
-kotlin {
-    wasmWasi {
-        nodejs()
-        binaries.executable()
-    }
-
-    sourceSets {
-        val wasmWasiTest by getting {
-            dependencies {
-                implementation(libs.kotlin.test)
-            }
-        }
-    }
-}
-
 tasks.withType<KotlinJsTest>().all {
     val denoExecTask = createDenoExec(
         inputFileProperty,
@@ -191,6 +192,143 @@ tasks.withType<NodeJsExec>().all {
     )
 
     denoExecTask.configure {
+        dependsOn (
+            project.provider { this@all.taskDependencies }
+        )
+    }
+}
+
+// WasmEdge tasks
+val wasmEdgeVersion = "0.14.0"
+
+val wasmEdgeInnerSuffix = when (currentOsType.name) {
+    OsName.LINUX -> "Linux"
+    OsName.MAC -> "Darwin"
+    OsName.WINDOWS -> "Windows"
+    else -> error("unsupported os type $currentOsType")
+}
+
+val unzipWasmEdge = run {
+    val wasmEdgeDirectory = "https://github.com/WasmEdge/WasmEdge/releases/download/$wasmEdgeVersion"
+    val wasmEdgeSuffix = when (currentOsType) {
+        OsType(OsName.LINUX, OsArch.X86_64) -> "manylinux_2_28_x86_64.tar.gz"
+        OsType(OsName.MAC, OsArch.X86_64) -> "darwin_x86_64.tar.gz"
+        OsType(OsName.MAC, OsArch.ARM64) -> "darwin_arm64.tar.gz"
+        OsType(OsName.WINDOWS, OsArch.X86_32),
+        OsType(OsName.WINDOWS, OsArch.X86_64) -> "windows.zip"
+        else -> error("unsupported os type $currentOsType")
+    }
+
+    val artifactName = "WasmEdge-$wasmEdgeVersion-$wasmEdgeSuffix"
+    val wasmEdgeLocation = "$wasmEdgeDirectory/$artifactName"
+
+    val downloadedTools = File(buildDir, "tools")
+
+    val downloadWasmEdge = tasks.register("wasmEdgeDownload", Download::class) {
+        src(wasmEdgeLocation)
+        dest(File(downloadedTools, artifactName))
+        overwrite(false)
+    }
+
+    tasks.register("wasmEdgeUnzip", Copy::class) {
+        dependsOn(downloadWasmEdge)
+
+        val archive = downloadWasmEdge.get().dest
+
+        from(if (archive.extension == "zip") zipTree(archive) else tarTree(archive))
+
+        val currentOsTypeForConfigurationCache = currentOsType.name
+
+        into(downloadedTools)
+
+        doLast {
+            if (currentOsTypeForConfigurationCache !in setOf(OsName.MAC, OsName.LINUX)) return@doLast
+
+            val unzipDirectory = downloadedTools.resolve("WasmEdge-$wasmEdgeVersion-$wasmEdgeInnerSuffix")
+
+            val libDirectory = unzipDirectory.toPath()
+                .resolve(if (currentOsTypeForConfigurationCache == OsName.MAC) "lib" else "lib64")
+
+            val targets = if (currentOsTypeForConfigurationCache == OsName.MAC)
+                listOf("libwasmedge.0.1.0.dylib", "libwasmedge.0.1.0.tbd")
+            else listOf("libwasmedge.so.0.1.0")
+
+            targets.forEach {
+                val target = libDirectory.resolve(it)
+                val firstLink = libDirectory.resolve(it.replace("0.1.0", "0")).also(Files::deleteIfExists)
+                val secondLink = libDirectory.resolve(it.replace(".0.1.0", "")).also(Files::deleteIfExists)
+
+                Files.createSymbolicLink(firstLink, target)
+                Files.createSymbolicLink(secondLink, target)
+            }
+        }
+    }
+}
+
+fun Project.createWasmEdgeExec(
+    nodeMjsFile: RegularFileProperty,
+    taskName: String,
+    taskGroup: String?,
+    startFunction: String
+): TaskProvider<Exec> {
+    val outputDirectory = nodeMjsFile.map { it.asFile.parentFile }
+    val wasmFileName = nodeMjsFile.map { "${it.asFile.nameWithoutExtension}.wasm" }
+
+    return tasks.register(taskName, Exec::class) {
+        dependsOn(unzipWasmEdge)
+        inputs.property("wasmFileName", wasmFileName)
+
+        taskGroup?.let { group = it }
+
+        description = "Executes tests with WasmEdge"
+
+        val wasmEdgeDirectory = unzipWasmEdge.get().destinationDir.resolve("WasmEdge-$wasmEdgeVersion-$wasmEdgeInnerSuffix")
+
+        executable = wasmEdgeDirectory.resolve("bin/wasmedge").absolutePath
+
+        doFirst {
+            val newArgs = mutableListOf<String>()
+
+            newArgs.add("--enable-gc")
+            newArgs.add("--enable-exception-handling")
+
+            newArgs.add(wasmFileName.get())
+            newArgs.add(startFunction)
+
+            args(newArgs)
+            workingDir(outputDirectory)
+        }
+    }
+}
+
+tasks.withType<KotlinJsTest>().all {
+    val wasmEdgeRunTask = createWasmEdgeExec(
+        inputFileProperty,
+        name.replace("Node", "WasmEdge"),
+        group,
+        "startUnitTests"
+    )
+
+    wasmEdgeRunTask.configure {
+        dependsOn (
+            project.provider { this@all.taskDependencies }
+        )
+    }
+
+    tasks.withType<KotlinTestReport> {
+        dependsOn(wasmEdgeRunTask)
+    }
+}
+
+tasks.withType<NodeJsExec>().all {
+     val wasmEdgeRunTask = createWasmEdgeExec(
+        inputFileProperty,
+        name.replace("Node", "WasmEdge"),
+        group,
+        "dummy"
+    )
+
+    wasmEdgeRunTask.configure {
         dependsOn (
             project.provider { this@all.taskDependencies }
         )
