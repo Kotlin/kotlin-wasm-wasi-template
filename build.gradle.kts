@@ -2,11 +2,12 @@
 
 import org.gradle.internal.os.OperatingSystem
 import de.undercouch.gradle.tasks.download.Download
-import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
 import java.nio.file.Files
+import java.util.Locale
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -60,9 +61,9 @@ val currentOsType = run {
         else -> OsName.UNKNOWN
     }
 
-    val osArch = when (providers.systemProperty("sun.arch.data.model").forUseAtConfigurationTime().get()) {
+    val osArch = when (providers.systemProperty("sun.arch.data.model").get()) {
         "32" -> OsArch.X86_32
-        "64" -> when (providers.systemProperty("os.arch").forUseAtConfigurationTime().get().toLowerCase()) {
+        "64" -> when (providers.systemProperty("os.arch").get().lowercase(Locale.getDefault())) {
             "aarch64" -> OsArch.ARM64
             else -> OsArch.X86_64
         }
@@ -84,7 +85,7 @@ val unzipDeno = run {
     }
     val denoLocation = "$denoDirectory/deno-$denoSuffix.zip"
 
-    val downloadedTools = File(buildDir, "tools")
+    val downloadedTools = File(layout.buildDirectory.asFile.get(), "tools")
 
     val downloadDeno = tasks.register("denoDownload", Download::class) {
         src(denoLocation)
@@ -239,7 +240,7 @@ val unzipWasmEdge = run {
     val artifactName = "WasmEdge-$wasmEdgeVersion-$wasmEdgeSuffix"
     val wasmEdgeLocation = "$wasmEdgeDirectory/$artifactName"
 
-    val downloadedTools = File(buildDir, "tools")
+    val downloadedTools = File(layout.buildDirectory.asFile.get(), "tools")
 
     val downloadWasmEdge = tasks.register("wasmEdgeDownload", Download::class) {
         src(wasmEdgeLocation)
