@@ -253,18 +253,20 @@ val unzipWasmEdge = run {
 
         val archive = downloadWasmEdge.get().dest
 
+        val subfolder = "WasmEdge-$wasmEdgeVersion-$wasmEdgeInnerSuffix"
+
         from(if (archive.extension == "zip") zipTree(archive) else tarTree(archive))
 
         val currentOsTypeForConfigurationCache = currentOsType.name
 
-        into(downloadedTools)
+        val unzipDirectory = downloadedTools.resolve(subfolder)
+
+        into(unzipDirectory)
 
         doLast {
             if (currentOsTypeForConfigurationCache !in setOf(OsName.MAC, OsName.LINUX)) return@doLast
 
-            val unzipDirectory = downloadedTools.resolve("WasmEdge-$wasmEdgeVersion-$wasmEdgeInnerSuffix")
-
-            val libDirectory = unzipDirectory.toPath()
+            val libDirectory = unzipDirectory.resolve(subfolder).toPath()
                 .resolve(if (currentOsTypeForConfigurationCache == OsName.MAC) "lib" else "lib64")
 
             val targets = if (currentOsTypeForConfigurationCache == OsName.MAC)
