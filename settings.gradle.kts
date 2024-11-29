@@ -4,6 +4,7 @@ pluginManagement {
     resolutionStrategy {
         repositories {
             gradlePluginPortal()
+            mavenLocal()
         }
     }
 }

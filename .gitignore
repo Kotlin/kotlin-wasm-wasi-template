@@ -1,4 +1,4 @@
-/.gradle/
+.gradle
 
 .idea/**/workspace.xml
 .idea/**/tasks.xml
@@ -21,7 +21,7 @@
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
 
-/build/
+build
 
 .idea
 .kotlin

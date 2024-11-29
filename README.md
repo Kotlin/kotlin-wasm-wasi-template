@@ -4,6 +4,8 @@
 
 This example showcases a simple application using WASI API in Node.js and Deno.
 
+/Users/ilya.goncharov/.gradle/wasm-tools/c/WasmEdge-0.14.0-Darwin/bin/wasmedge --enable-gc --enable-exception-handling /Users/ilya.goncharov/reproducers/kotlin-wasm-wasi-template/build/compileSync/wasmWasi/test/testDevelopmentExecutable/kotlin/kotlin-wasm-wasi-example-wasm-wasi-test.wasm startUnitTests --dryRun
+/Users/ilya.goncharov/reproducers/kotlin-wasm-wasi-template/build/tools/WasmEdge-0.14.0-Darwin/WasmEdge-0.14.0-Darwin/bin/wasmedge --enable-gc --enable-exception-handling kotlin-wasm-wasi-example-wasm-wasi-test.wasm startUnitTests
 ![](screenshots/wasi-output.png)
 
 Follow the instructions in the sections below to try out this Kotlin/Wasm application.
