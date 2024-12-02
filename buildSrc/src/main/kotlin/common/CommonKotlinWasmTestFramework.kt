@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTestFramework
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinTestRunnerCliArgs
-import java.io.File
+import java.nio.file.Path
 
 class CommonKotlinWasmTestFramework(
     kotlinJsTest: KotlinJsTest,
@@ -33,11 +33,13 @@ class CommonKotlinWasmTestFramework(
     private val projectLayout = kotlinJsTest.project.layout
 
     override val workingDir: Provider<Directory> =
-        projectLayout.dir(kotlinJsTest.inputFileProperty.asFile.map { it.parentFile.parentFile })
+        projectLayout.dir(
+            kotlinJsTest.inputFileProperty.asFile.map { it.parentFile.parentFile.resolve("static/$name") }
+        )
 
     override val executable: Property<String> = kotlinJsTest.project.objects.property(String::class.java)
 
-    val getArgs: Property<(File, String, File) -> List<String>> = kotlinJsTest.project.objects.property()
+    val argsProperty: Property<(Path, Path) -> List<String>> = kotlinJsTest.project.objects.property()
 
     override fun createTestExecutionSpec(
         task: KotlinJsTest,
@@ -59,14 +61,14 @@ class CommonKotlinWasmTestFramework(
         )
 
         val args = mutableListOf<String>()
+
         with(args) {
             addAll(
-                getArgs.get()(
-                    workingDir.get().asFile,
-                    "runUnitTests${name.capitalized()}.mjs",
+                argsProperty.get()(
+                    workingDir.get().asFile.toPath(),
                     task.inputFileProperty.map {
                         it.asFile.parentFile.resolve(it.asFile.nameWithoutExtension + ".wasm")
-                    }.get()
+                    }.get().toPath()
                 )
             )
             addAll(cliArgs.toList())

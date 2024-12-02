@@ -1,45 +1,48 @@
 package deno
 
-import common.*
-import org.gradle.api.file.ArchiveOperations
-import org.gradle.api.provider.Provider
-import org.gradle.kotlin.dsl.support.serviceOf
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
-import java.io.File
+import dsl.runtime
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinWasmWasiTargetDsl
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
-fun KotlinJsIrTarget.deno() {
-    subTargets.add(
-        project.objects.newInstance(
-            KotlinCommonSubTarget::class.java,
-            this,
-            "deno",
-            "1.38.3",
-            { os: Provider<OsType>, version: String ->
-                val denoSuffix = when (os.get()) {
-                    OsType(OsName.LINUX, OsArch.X86_64) -> "x86_64-unknown-linux-gnu"
-                    OsType(OsName.MAC, OsArch.X86_64) -> "x86_64-apple-darwin"
-                    OsType(OsName.MAC, OsArch.ARM64) -> "aarch64-apple-darwin"
-                    else -> null
-                }
-
-                "https://github.com/denoland/deno/releases/download/v$version/deno-$denoSuffix.zip"
-            },
-            { installedDir: File?, _: Provider<OsType>, _: String ->
-                installedDir?.resolve("deno")?.normalize()?.absolutePath ?: "deno"
+fun KotlinWasmWasiTargetDsl.deno() {
+    runtime(
+        "deno",
+        "1.38.3"
+    ) {
+        download { os: String, arch: String, version: String ->
+            val denoSuffix = when {
+                os.lowercase().contains("linux") && arch == "x86_64" -> "x86_64-unknown-linux-gnu"
+                os.lowercase().contains("mac") && arch == "x86_64" -> "x86_64-apple-darwin"
+                os.lowercase().contains("mac") && (arch == "arm" || arch.startsWith("aarch")) -> "aarch64-apple-darwin"
+                else -> null
             }
-        ).also {
-            it.configure()
-            it.getArgs.set { workingDir, fileName, inputWasmFile ->
-                val denoMjs = prepareFile(
-                    workingDir,
-                    fileName,
-                    inputWasmFile
-                )
 
-                denoArgs(denoMjs)
-            }
-            it.archiveOperation.set(project.serviceOf<ArchiveOperations>()::zipTree)
-            it.subTargetConfigurators.add(CommonEnvironmentConfigurator(it, it.envSpec))
+            "https://github.com/denoland/deno/releases/download/v$version/deno-$denoSuffix.zip"
         }
-    )
+
+        executable { _: String, _: String, _: String, installationDir: Path? ->
+            installationDir?.resolve("deno")?.normalize()?.absolutePathString() ?: "deno"
+        }
+
+        runArgs { isolationDir: Path, entry: Path ->
+            val denoMjs = prepareFile(
+                isolationDir.toFile(),
+                "startDeno.mjs",
+                entry.toFile()
+            )
+
+            denoArgs(denoMjs)
+        }
+
+        testArgs { isolationDir: Path, entry: Path ->
+            val denoMjs = prepareFile(
+                isolationDir.toFile(),
+                "runUnitTestsDeno.mjs",
+                entry.toFile()
+            )
+
+            denoArgs(denoMjs)
+        }
+    }
 }

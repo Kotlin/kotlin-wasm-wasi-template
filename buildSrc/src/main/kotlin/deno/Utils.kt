@@ -20,14 +20,11 @@ context.initialize(wasmInstance);
 wasmInstance.exports.startUnitTests?.();
 """
 
-fun prepareFile(workingDir: File, denoFileName: String, wasmFile: File): File {
-    val static = workingDir.resolve("static").also {
-        it.mkdirs()
-    }
-    val denoMjs = static.resolve(denoFileName)
+fun prepareFile(isolationDir: File, denoFileName: String, wasmFile: File): File {
+    val denoMjs = isolationDir.resolve(denoFileName)
     denoMjs.writeText(
         getDenoExecutableText(
-            wasmFile.relativeTo(workingDir).invariantSeparatorsPath
+            wasmFile.relativeTo(isolationDir).invariantSeparatorsPath
         )
     )
 

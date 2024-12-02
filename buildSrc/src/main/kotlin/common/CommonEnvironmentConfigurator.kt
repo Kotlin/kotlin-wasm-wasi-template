@@ -7,7 +7,6 @@ package common
 
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.internal.extensions.stdlib.capitalized
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.targets.js.ir.JsEnvironmentConfigurator
 import org.jetbrains.kotlin.gradle.targets.js.ir.JsIrBinary
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrSubTarget.Companion.R
 @ExperimentalWasmDsl
 class CommonEnvironmentConfigurator(
     private val subTargetSpecific: KotlinCommonSubTarget,
-    private val envSpec: CommonEnvSpec,
 ) : JsEnvironmentConfigurator<Exec>(subTargetSpecific) {
 
     override fun configureBinaryRun(binary: JsIrBinary): TaskProvider<Exec> {
@@ -31,28 +29,31 @@ class CommonEnvironmentConfigurator(
 
                 group = subTargetSpecific.name
 
-                description = "Run"
+                description = "Run ${subTargetSpecific.name}"
 
                 dependsOn(binary.linkTask)
 
-                val binaryInputFile = binary.mainFile.map { it.asFile.parentFile.resolve(it.asFile.nameWithoutExtension + ".wasm") }
+                val binaryInputFile =
+                    binary.mainFile.map { it.asFile.parentFile.resolve(it.asFile.nameWithoutExtension + ".wasm") }
                 val workingDir = binaryInputFile.map { it.parentFile.parentFile }
 
-                val executableStr = envSpec.executable
+                val executableStr = subTargetSpecific.envSpec.executable
 
-                val subTargetName = subTargetSpecific.name
-                val args = subTargetSpecific.getArgs
+                val args = subTargetSpecific.runArgs
 
                 doFirst {
                     executable = executableStr.get()
 
-                    setWorkingDir(workingDir)
+                    val isolationDir = workingDir.get().resolve("static/$name").also {
+                        it.mkdirs()
+                    }
+
+                    setWorkingDir(isolationDir)
 
                     args(
                         args.get()(
-                            workingDir.get(),
-                            "start${subTargetName.capitalized()}.mjs",
-                            binaryInputFile.get()
+                            isolationDir.toPath(),
+                            binaryInputFile.get().toPath()
                         )
                     )
                 }
