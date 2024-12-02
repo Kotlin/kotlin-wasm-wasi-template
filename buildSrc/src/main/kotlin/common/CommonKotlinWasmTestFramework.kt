@@ -77,7 +77,7 @@ class CommonKotlinWasmTestFramework(
             args = args,
             checkExitCode = false,
             clientSettings = clientSettings,
-            dryRunArgs = args + "--dryRun"
+            dryRunArgs = null,
         )
     }
 
