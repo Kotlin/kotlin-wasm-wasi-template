@@ -62,10 +62,14 @@ class CommonKotlinWasmTestFramework(
 
         val args = mutableListOf<String>()
 
+        val workingDirFile = workingDir.get().asFile
+
+        workingDirFile.mkdirs()
+
         with(args) {
             addAll(
                 argsProperty.get()(
-                    workingDir.get().asFile.toPath(),
+                    workingDirFile.toPath(),
                     task.inputFileProperty.map {
                         it.asFile.parentFile.resolve(it.asFile.nameWithoutExtension + ".wasm")
                     }.get().toPath()
