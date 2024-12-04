@@ -63,6 +63,6 @@ abstract class CommonSetupTask @Inject constructor(
             into(destination)
         }
 
-        extractionAction.get()(os.get(), arch.get(), version.get(), destination.toPath())
+        extractionAction.orNull?.invoke(os.get(), arch.get(), version.get(), destination.toPath())
     }
 }
