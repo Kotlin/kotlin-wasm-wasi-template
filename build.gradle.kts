@@ -25,10 +25,8 @@ kotlin {
     }
 
     sourceSets {
-        val wasmWasiTest by getting {
-            dependencies {
-                implementation(libs.kotlin.test)
-            }
+        wasmWasiTest.dependencies {
+            implementation(libs.kotlin.test)
         }
     }
 }

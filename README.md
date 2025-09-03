@@ -26,7 +26,7 @@ To build and run the application:
 
 * **Run the program with WasmEdge:**
 
-  `./gradlew wasmWasiWasmEdgeRun`
+  `./gradlew wasmWasiWasmEdgeProductionRun`
   <br>&nbsp;<br>
 
 * **Run tests with WasmEdge:**
@@ -36,7 +36,7 @@ To build and run the application:
 
 * **Run the program with NodeJs:**
 
-  `./gradlew wasmWasiNodeRun` 
+  `./gradlew wasmWasiNodeProductionRun` 
   <br>&nbsp;<br>
 
 * **Run tests with NodeJs:**
@@ -46,7 +46,7 @@ To build and run the application:
 
 * **Run the program with Deno:**
 
-  `./gradlew wasmWasiDenoRun`
+  `./gradlew wasmWasiDenoProductionRun`
   <br>&nbsp;<br>
 
 * **Run tests with Deno:**

@@ -5,7 +5,7 @@ class WasiTest {
     @Test
     fun mainTest() {
         val monotonicTime1 = wasiMonotonicTime()
-        val monotinicTime2 = wasiMonotonicTime()
-        assertTrue(monotonicTime1 <= monotinicTime2, "Wasi monotonic clock is not monotonic :(")
+        val monotonicTime2 = wasiMonotonicTime()
+        assertTrue(monotonicTime1 <= monotonicTime2, "Wasi monotonic clock is not monotonic :(")
     }
 }
