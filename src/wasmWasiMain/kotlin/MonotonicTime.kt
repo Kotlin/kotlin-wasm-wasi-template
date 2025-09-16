@@ -33,6 +33,6 @@ fun wasiRealTime(): Long = wasiGetTime(REALTIME)
 
 fun wasiMonotonicTime(): Long = wasiGetTime(MONOTONIC)
 
-// We need it to run WasmEdge with the _initialize function
+// We need it to run WasmEdge/WAMR with the _initialize function
 @WasmExport
 fun dummy() {}
