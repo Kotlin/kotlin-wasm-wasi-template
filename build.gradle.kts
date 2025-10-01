@@ -353,3 +353,103 @@ tasks.withType<NodeJsExec>().all {
         )
     }
 }
+
+
+// WAMR tasks
+val wamrVersion = "2.2.0"
+val wamrDirectoryName = "iwasm-gc-eh-$wamrVersion"
+
+val unzipWAMR = run {
+    val wamrDirectory = "https://github.com/bytecodealliance/wasm-micro-runtime/releases/download/WAMR-$wamrVersion"
+    val wamrSuffix = when (currentOsType) {
+        OsType(OsName.LINUX, OsArch.X86_64) -> "x86_64-ubuntu-20.04"
+        OsType(OsName.MAC, OsArch.X86_64),
+        OsType(OsName.MAC, OsArch.ARM64) -> "x86_64-macos-13"
+        OsType(OsName.WINDOWS, OsArch.X86_32),
+        OsType(OsName.WINDOWS, OsArch.X86_64) -> "x86_64-windows-latest"
+        else -> error("unsupported os type $currentOsType")
+    }
+
+    val wamrArtifactiName = "$wamrDirectoryName-$wamrSuffix.tar.gz"
+    val wamrLocation = "$wamrDirectory/$wamrArtifactiName"
+
+    val downloadedTools = File(layout.buildDirectory.asFile.get(), "tools")
+
+    val downloadWamr = tasks.register("wamrDownload", Download::class) {
+        src(wamrLocation)
+        dest(File(downloadedTools, wamrArtifactiName))
+        overwrite(false)
+    }
+
+    tasks.register("wamrUnzip", Copy::class) {
+        dependsOn(downloadWamr)
+        from(tarTree(downloadWamr.get().dest))
+        into(downloadedTools.resolve(wamrDirectoryName) )
+    }
+}
+
+fun Project.createWamrExec(
+    nodeMjsFile: RegularFileProperty,
+    taskName: String,
+    taskGroup: String?,
+    startFunction: String
+): TaskProvider<Exec> {
+    val outputDirectory = nodeMjsFile.map { it.asFile.parentFile }
+    val wasmFileName = nodeMjsFile.map { "${it.asFile.nameWithoutExtension}.wasm" }
+
+    return tasks.register(taskName, Exec::class) {
+        dependsOn(unzipWAMR)
+        inputs.property("wasmFileName", wasmFileName)
+
+        taskGroup?.let { group = it }
+        description = "Executes tests with WAMR"
+
+        executable = unzipWAMR.get().destinationDir.resolve("iwasm").absolutePath
+
+        doFirst {
+            val newArgs = mutableListOf<String>()
+
+            newArgs.add("--function")
+            newArgs.add(startFunction)
+
+            newArgs.add(wasmFileName.get())
+
+            args(newArgs)
+            workingDir(outputDirectory)
+        }
+    }
+}
+
+tasks.withType<KotlinJsTest>().all {
+    val wamrRunTask = createWamrExec(
+        inputFileProperty,
+        name.replace("Node", "WAMR"),
+        group,
+        "_initialize"
+    )
+
+    wamrRunTask.configure {
+        dependsOn (
+            project.provider { this@all.taskDependencies }
+        )
+    }
+
+    tasks.withType<KotlinTestReport> {
+        dependsOn(wamrRunTask)
+    }
+}
+
+tasks.withType<NodeJsExec>().all {
+     val wamrRunTask = createWamrExec(
+        inputFileProperty,
+        name.replace("Node", "WAMR"),
+        group,
+        "dummy"
+    )
+
+    wamrRunTask.configure {
+        dependsOn (
+            project.provider { this@all.taskDependencies }
+        )
+    }
+}
