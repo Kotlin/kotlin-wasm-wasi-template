@@ -73,7 +73,7 @@ val currentOsType = run {
 
 // Deno tasks
 val unzipDeno = run {
-    val denoVersion = "1.38.3"
+    val denoVersion = "1.46.3"
     val denoDirectory = "https://github.com/denoland/deno/releases/download/v$denoVersion"
     val denoSuffix = when (currentOsType) {
         OsType(OsName.LINUX, OsArch.X86_64) -> "x86_64-unknown-linux-gnu"
@@ -169,6 +169,7 @@ fun Project.createDenoExec(
         }
 
         newArgs.add("run")
+        newArgs.add("--v8-flags=--experimental-wasm-exnref")
         newArgs.add("--allow-read")
         newArgs.add("--allow-env")
 
