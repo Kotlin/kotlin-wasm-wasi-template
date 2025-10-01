@@ -34,6 +34,14 @@ To build and run the application:
   `./gradlew wasmWasiWasmEdgeTest`
   <br>&nbsp;<br>
 
+* **Run the program with Wasmtime:**
+
+  `./gradlew wasmWasiWasmtimeRun`
+
+* **Run tests with Wasmtime:**
+
+  `./gradlew wasmWasiWasmtimeTest`
+
 * **Run the program with NodeJs:**
 
   `./gradlew wasmWasiNodeProductionRun` 
