@@ -38,9 +38,6 @@ To build and run the application:
 
   `./gradlew wasmWasiWasmtimeRun`
 
-  > **Note:**
-  > The Exception Handling proposal [is not yet implemented](https://github.com/bytecodealliance/wasmtime/issues/3427)
-
 * **Run tests with Wasmtime:**
 
   `./gradlew wasmWasiWasmtimeTest`

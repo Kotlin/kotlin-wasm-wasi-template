@@ -20,7 +20,7 @@ plugins {
 buildscript {
     dependencies {
         // to extract `tar.xz`
-        classpath("org.tukaani:xz:1.9")
+        classpath("org.tukaani:xz:1.10")
     }
 }
 
@@ -365,7 +365,7 @@ tasks.withType<NodeJsExec>().all {
 }
 
 // Wasmtime tasks
-val wasmtimeVersion = "dev" // only `dev` supports GC
+val wasmtimeVersion = "v37.0.1"
 
 val wasmtimeSuffix = when (currentOsType) {
     OsType(OsName.LINUX, OsArch.X86_64)   -> "x86_64-linux"
@@ -442,10 +442,8 @@ fun Project.createWasmtimeExec(
             val newArgs = mutableListOf<String>()
 
             newArgs.add("-W")
-            newArgs.add("function-references,gc")
+            newArgs.add("function-references,gc,exceptions")
 
-            newArgs.add("-D")
-            newArgs.add("logging=y")
 
             newArgs.add("--invoke")
             newArgs.add(startFunction)
