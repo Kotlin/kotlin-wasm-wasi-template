@@ -29,6 +29,8 @@ val kotlinAdditionalCliOptions = providers.gradleProperty("kotlin_additional_cli
 repositories {
     mavenCentral()
     kotlin_repo_url?.also { maven(it) }
+
+    mavenLocal()
 }
 
 kotlin {
@@ -266,7 +268,7 @@ tasks.withType<NodeJsExec>().all {
 }
 
 // WasmEdge tasks
-val wasmEdgeVersion = "0.14.0"
+val wasmEdgeVersion = "0.15.0"
 
 val wasmEdgeInnerSuffix = when (currentOsType.name) {
     OsName.LINUX -> "Linux"
@@ -315,7 +317,7 @@ val unzipWasmEdge = run {
         doLast {
             if (currentOsTypeForConfigurationCache !in setOf(OsName.MAC, OsName.LINUX)) return@doLast
 
-            val libDirectory = unzipDirectory.resolve(subfolder).toPath()
+            val libDirectory = unzipDirectory.toPath()
                 .resolve(if (currentOsTypeForConfigurationCache == OsName.MAC) "lib" else "lib64")
 
             val targets = if (currentOsTypeForConfigurationCache == OsName.MAC)
@@ -351,7 +353,7 @@ fun Project.createWasmEdgeExec(
 
         description = "Executes tests with WasmEdge"
 
-        val wasmEdgeDirectory = unzipWasmEdge.get().destinationDir.resolve("WasmEdge-$wasmEdgeVersion-$wasmEdgeInnerSuffix")
+        val wasmEdgeDirectory = unzipWasmEdge.get().destinationDir
 
         executable = wasmEdgeDirectory.resolve("bin/wasmedge").absolutePath
 

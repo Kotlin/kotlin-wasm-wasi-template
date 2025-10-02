@@ -8,6 +8,8 @@ pluginManagement {
             gradlePluginPortal()
 
             kotlin_repo_url?.also { maven(it) }
+
+            mavenLocal()
         }
     }
 }

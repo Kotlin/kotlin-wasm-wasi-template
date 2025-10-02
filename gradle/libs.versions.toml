@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.2.20"
+kotlin = "2.3.255-SNAPSHOT"
 undercouch = "5.6.0"
 
 [libraries]
