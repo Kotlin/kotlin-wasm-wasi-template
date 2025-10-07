@@ -2,7 +2,6 @@
 
 import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.Companion.fromVersion
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.wasm.wasmtime.WasmtimeExec
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
