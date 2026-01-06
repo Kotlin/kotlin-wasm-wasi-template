@@ -41,7 +41,7 @@ kotlin {
     }
 }
 
-// Uncomment following block to turn off using the Exception Handling proposal.
+// Uncomment the following block to turn off using the Exception Handling proposal.
 // Note, with this option, the compiler will generate `unreachable` instruction instead of throw, 
 // and a Wasm module will stop execution in this case.
 //
@@ -49,11 +49,10 @@ kotlin {
 //     compilerOptions.freeCompilerArgs.addAll(listOf("-Xwasm-use-traps-instead-of-exceptions"))
 // }
 
-// Uncomment following block to force using the final version of the Exception Handling proposal.
-// Note, the new opcodes are not supported yet in WAMR and Node.js
+// Uncomment the following block to force using the old version of the Exception Handling proposal.
 //
 // tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile>().configureEach {
-//     compilerOptions.freeCompilerArgs.addAll(listOf("-Xwasm-use-new-exception-proposal"))
+//     compilerOptions.freeCompilerArgs.addAll(listOf("-Xwasm-use-new-exception-proposal=false"))
 // }
 
 enum class OsName { WINDOWS, MAC, LINUX, UNKNOWN }
