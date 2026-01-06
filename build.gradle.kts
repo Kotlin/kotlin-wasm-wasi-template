@@ -362,7 +362,7 @@ tasks.withType<NodeJsExec>().all {
 }
 
 // Wasmtime tasks
-val wasmtimeVersion = "v37.0.1"
+val wasmtimeVersion = "40.0.0"
 
 val wasmtimeSuffix = when (currentOsType) {
     OsType(OsName.LINUX, OsArch.X86_64)   -> "x86_64-linux"
@@ -375,10 +375,10 @@ val wasmtimeSuffix = when (currentOsType) {
     else                                  -> error("unsupported os type $currentOsType")
 }
 
-val wasmtimeArtifactName = "wasmtime-$wasmtimeVersion-$wasmtimeSuffix"
+val wasmtimeArtifactName = "wasmtime-v$wasmtimeVersion-$wasmtimeSuffix"
 
 val unzipWasmtime = run {
-    val wasmtimeDirectory = "https://github.com/bytecodealliance/wasmtime/releases/download/$wasmtimeVersion"
+    val wasmtimeDirectory = "https://github.com/bytecodealliance/wasmtime/releases/download/v$wasmtimeVersion"
     val archiveType = if (currentOsType.name == OsName.WINDOWS) "zip" else "tar.xz"
     val wasmtimeArchiveName = "$wasmtimeArtifactName.$archiveType"
     val wasmtimeLocation = "$wasmtimeDirectory/$wasmtimeArchiveName"
