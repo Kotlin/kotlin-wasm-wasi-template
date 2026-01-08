@@ -122,7 +122,7 @@ const wasmInstance = await WebAssembly.instantiate(module, {
   "wasi_snapshot_preview1": context.exports,
 });
 
-context.initialize(wasmInstance);
+context.start(wasmInstance);
 wasmInstance.exports.startUnitTests?.();
 """
 
