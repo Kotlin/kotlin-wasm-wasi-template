@@ -44,6 +44,11 @@ To build and run the application:
   `./gradlew wasmWasiWasmtimeTest`
   <br>&nbsp;<br>
 
+## Compiler Arguments
+
+`build.gradle.kts` contains commented-out examples of Kotlin/Wasm compiler options for configuring
+how exceptions are compiled. See the [full list of Kotlin/Wasm compiler options for 2.5.0](https://github.com/JetBrains/kotlin/blob/v2.5.0-Beta2/compiler/testData/cli/wasm/wasmExtraHelp.out).
+
 ## Feedback and questions
 
 Give it a try and share your feedback or questions in our [#webassembly](https://slack-chats.kotlinlang.org/c/webassembly) 

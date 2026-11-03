@@ -18,6 +18,23 @@ repositories {
     mavenCentral()
 }
 
+///////////////////////////////// COMPILER OPTIONS //////////////////////////////////////////////////
+// The full list of Kotlin/Wasm compiler options:
+// https://github.com/JetBrains/kotlin/blob/v2.5.0-Beta2/compiler/arguments/src/org/jetbrains/kotlin/arguments/description/WasmCompilerArguments.kt
+// With the standalone compiler installed, you can also print them with `kotlinc-wasm -X`.
+//
+// Uncomment one of the blocks below to change how exceptions are compiled:
+
+// - turn off the Exception Handling proposal: `throw` becomes `unreachable`, which stops the execution of module
+//tasks.withType<KotlinJsCompile>().configureEach {
+//    compilerOptions.freeCompilerArgs.add("-Xwasm-use-traps-instead-of-exceptions")
+//}
+
+// - use the old version of the Exception Handling proposal
+//tasks.withType<KotlinJsCompile>().configureEach {
+//    compilerOptions.freeCompilerArgs.add("-Xwasm-use-new-exception-proposal=false")
+//}
+
 kotlin {
     wasmWasi {
         wasmtime()
@@ -192,18 +209,3 @@ tasks.withType<WasmtimeExec>().all {
         )
     }
 }
-
-
-// Uncomment the following block to turn off using the Exception Handling proposal.
-// Note, with this option, the compiler will generate `unreachable` instruction instead of throw,
-// and a Wasm module will stop execution in this case.
-//
-//tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile>().configureEach {
-//    compilerOptions.freeCompilerArgs.addAll(listOf("-Xwasm-use-traps-instead-of-exceptions"))
-//}
-
-// Uncomment the following block to force using the old version of the Exception Handling proposal.
-//
-//tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile>().matching { it.name.contains("wasmWasi", ignoreCase = true) }.configureEach {
-//    compilerOptions.freeCompilerArgs.addAll(listOf("-Xwasm-use-new-exception-proposal=false"))
-//}
