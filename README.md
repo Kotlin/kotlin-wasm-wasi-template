@@ -2,7 +2,7 @@
 
 # Kotlin/Wasm WASI example
 
-This example showcases a simple application using WASI API in Node.js and Deno.
+This example showcases a simple application using WASI API preview1 in [Wasmtime](https://wasmtime.dev/) and [WasmEdge](https://wasmedge.org/).
 
 ![](screenshots/wasi-output.png)
 
@@ -36,34 +36,13 @@ To build and run the application:
 
 * **Run the program with Wasmtime:**
 
-  `./gradlew wasmWasiWasmtimeRun`
+  `./gradlew wasmWasiWasmtimeProductionRun`
+  <br>&nbsp;<br>
 
 * **Run tests with Wasmtime:**
 
   `./gradlew wasmWasiWasmtimeTest`
-
-* **Run the program with NodeJs:**
-
-  `./gradlew wasmWasiNodeProductionRun` 
   <br>&nbsp;<br>
-
-* **Run tests with NodeJs:**
-
-  `./gradlew wasmWasiNodeTest`
-  <br>&nbsp;<br>
-
-* **Run the program with Deno:**
-
-  `./gradlew wasmWasiDenoProductionRun`
-  <br>&nbsp;<br>
-
-* **Run tests with Deno:**
-
-  `./gradlew wasmWasiDenoTest`
-
-  > **Note:**
-  > For Windows platform, ensure `deno.exe` is installed. For more information, 
-  > see [Deno's installation documentation](https://docs.deno.com/runtime/manual/getting_started/installation).
 
 ## Feedback and questions
 
