@@ -6,6 +6,7 @@ import org.gradle.api.internal.file.archive.compression.URIBuilder
 import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinToolingSetupTask
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
 import java.io.InputStream
@@ -395,4 +396,9 @@ tasks.withType<NodeJsExec>().all {
             project.provider { this@all.taskDependencies }
         )
     }
+}
+
+// KT-82365
+tasks.withType<KotlinToolingSetupTask>().configureEach {
+    enabled = false
 }
