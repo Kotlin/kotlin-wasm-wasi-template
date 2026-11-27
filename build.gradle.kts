@@ -232,7 +232,7 @@ tasks.withType<KotlinJsTest>().all {
         inputFileProperty,
         name.replace("Wasmtime", "WasmEdge"),
         group,
-        "startUnitTests"
+        "startunittests"
     )
 
     wasmEdgeRunTask.configure {
